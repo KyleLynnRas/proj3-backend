@@ -15,13 +15,13 @@
 
 - Node
 - Express
+- Mongoose
 - Cors
-- Dotenv
 - Morgan
 
 ## Approach
 
-We plan to use a thierd party API to pull job data from the remotive.io database and populate the search page with jobs based on the parameters entered. As well as the ability to save specific jobs to the mongo database allowing the user to add and edit notes on specific jobs.
+We plan to use a third party API to pull job data from the remotive.io database and populate the search page with jobs based on the parameters entered. As well as the ability to save specific jobs to the mongo database allowing the user to add and edit notes on specific jobs.
 
 ## Site Map
 
