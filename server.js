@@ -102,10 +102,6 @@ app.delete('/jobs/:id', async (req, res) => {
     }
 })
 
-app.get('/search', async (req, res) => {
-    res.send('Search')
-})
-
 ///////////////////////////////
 // LISTENER
 ////////////////////////////////
