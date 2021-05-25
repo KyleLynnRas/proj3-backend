@@ -41,10 +41,12 @@ const JobSchema = new mongoose.Schema({
     job_type: String,
     candidate_required_location: String,
     salary: String,
-    description: String,
     url: String,
-    notes: {type: String, required: false}
-
+    notes: {type: String, required: false},
+    applied: {type: Boolean, default: false},
+    interviewed: {type: Boolean, default: false},
+    cover_letter: {type: Boolean, default: false},
+    resume: {type: Boolean, default: false},
 })
 
 const Job = mongoose.model('Job', JobSchema)
