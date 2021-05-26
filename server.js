@@ -15,6 +15,42 @@ const mongoose = require('mongoose')
 const cors = require('cors')
 // Import morgan
 const morgan = require('morgan')
+// Import Webtoken
+const jwt = require('jsonwebtoken');
+
+
+const token = jwt.sign({hello: 'world'}, MONGODBURI);
+console.log(token);
+
+const decoded = jwt.verify(token, MONGODBURI);
+console.log(decoded);
+
+// Authorize Function
+const auth = (req, res, next) => {
+    const {authorization} = req.headers
+    if (authorization) {
+        const token = authorization.split(' ')[1]
+        const result = jwt.verify(token, MONGODBURI)
+        req.user = result;
+        next();
+    } else {
+        res.send('NO TOKEN')
+    };
+};
+
+// Dummy User
+const user = { username: 'ValerieLarson', password: 'password' };
+
+// Auth Route
+app.post('/jobs/login', async (req, res) => {
+    const { username, password } = req.body
+    if (username === user.username && password === user.password) {
+        const token = await jwt.sign({ username }, MONGODBURI)
+        await res.json(token);
+    } else {
+        res.send('WRONG USERNAME OR PASSWORD')
+    };
+});
 
 ///////////////////////////////
 // DATABASE CONNECTION
@@ -47,6 +83,7 @@ const JobSchema = new mongoose.Schema({
     interviewed: {type: Boolean, default: false},
     cover_letter: {type: Boolean, default: false},
     resume: {type: Boolean, default: false},
+    user: { username: String, password: String }
 })
 
 const Job = mongoose.model('Job', JobSchema)
@@ -55,9 +92,9 @@ const Job = mongoose.model('Job', JobSchema)
 // MIDDLEWARE
 ////////////////////////////////
 
-app.use(cors())
-app.use(morgan('dev'))
-app.use(express.json())
+app.use(cors());
+app.use(morgan('dev'));
+app.use(express.json());
 
 ///////////////////////////////
 // ROUTES
