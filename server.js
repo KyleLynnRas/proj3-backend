@@ -24,6 +24,9 @@ const bcrypt = require('bcrypt');
 //Import saltRounds
 const saltRounds = 12;
 
+app.set('MONGODBURI', 'nodeRestApi');
+
+
 
 ///////////////////////////////
 // DATABASE CONNECTION
@@ -75,6 +78,8 @@ UserSchema.pre('save', function(next) {
     this.password = bcrypt.hashSync(this.password, saltRounds);
     next();
 });
+
+const userModel = mongoose.model('User', UserSchema)
 
 
 
@@ -133,7 +138,7 @@ app.use(bodyParser.urlencoded({extended: false}));
 
 // Create and Authenticate functions
 const create = (req, res, next) => {
-    UserSchema.create({username: req.body.username, password: req.body.password}, function (error, result) {
+    userModel.create({username: req.body.username, password: req.body.password}, function (error, result) {
         if (error) {
             next(error);
         } else {
@@ -143,7 +148,7 @@ const create = (req, res, next) => {
 };
 
 const authenticate = (req, res, next) => {
-    UserSchema.findOne({username:req.body.username}, function (error, userInfo) {
+    userModel.findOne({username:req.body.username}, function (error, userInfo) {
         if (error) {
             next(error)
         } else {
@@ -165,10 +170,10 @@ const authenticate = (req, res, next) => {
 ////////////////////////////////
 
 // Sign-up route
-app.post('/jobs/signup', UserSchema.create);
+app.post('/jobs/signup', create);
 
 // Login route
-app.post('/jobs/login', UserSchema.authenticate);
+app.post('/jobs/login', authenticate);
 
 
 // Test route
