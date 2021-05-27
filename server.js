@@ -66,7 +66,8 @@ const Job = mongoose.model('Job', JobSchema)
 const UserSchema = new mongoose.Schema({
     username: {
         type: String,
-        required: true
+        required: true,
+        unique: true
     },
     password: {
         type: String,
@@ -91,50 +92,6 @@ app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(bodyParser.urlencoded({extended: false}));
-
-
-
-// const token = jwt.sign({hello: 'world'}, MONGODBURI);
-// console.log(token);
-
-// const decoded = jwt.verify(token, MONGODBURI);
-// console.log(decoded);
-
-// // Authorize Function
-// const auth = (req, res, next) => {
-//     try{
-//     const {authorization} = req.headers
-//     if (authorization) {
-//         const token = authorization.split(' ')[1]
-//         const result = jwt.verify(token, MONGODBURI)
-//         req.user = result;
-//         next();
-//     } else {
-//         res.send('NO TOKEN')
-//     }}
-//     catch(error){
-//         res.send(error);
-//     }
-// };
-
-// // Dummy User
-// const user = { username: 'ValerieLarson', password: 'password' };
-
-// // Auth Route
-// app.post('/jobs/login', async (req, res) => {
-//     const { username, password } = req.body
-//     if (username === user.username && password === user.password) {
-//         const token = await jwt.sign({ username }, MONGODBURI)
-//         await res.json(token);
-//     } else {
-//         res.send('WRONG USERNAME OR PASSWORD')
-//     };
-// });
-
-// // Test auth route
-// app.get("/test", auth, (req, res) => {
-//     res.send(req.user);
-// });
 
 // Create and Authenticate functions
 const create = (req, res, next) => {
@@ -162,7 +119,18 @@ const authenticate = (req, res, next) => {
     });
 };
 
-
+const validateUsers = (req, res, next) => {
+    jwt.verify(req.headers['x-access-token'],
+    req.app.get('MONGODBURI'), function(err, decoded) {
+        if (err) {
+            res.json({status:'error', message: err.message, data:null})
+        } else {
+            //add user id to request
+            req.body.userId = decoded.id;
+            next();
+        }
+    });
+}
 
 
 ///////////////////////////////
@@ -182,7 +150,7 @@ app.get('/', (req, res) => {
 })
 
 // Jobs index route
-app.get('/jobs', async (req, res) => {
+app.get('/jobs', validateUsers, async (req, res) => {
     try {
         res.json(await Job.find({}))
     } catch (error) {
@@ -191,7 +159,7 @@ app.get('/jobs', async (req, res) => {
 })
 
 // Jobs create route
-app.post('/jobs', async (req, res) => {
+app.post('/jobs', validateUsers, async (req, res) => {
     try {
         res.json(await Job.create(req.body))
     } catch (error) {
@@ -200,7 +168,7 @@ app.post('/jobs', async (req, res) => {
 })
 
 // Update route on show page
-app.put('/jobs/:id', async (req, res) => {
+app.put('/jobs/:id', validateUsers, async (req, res) => {
     try {
         res.json(await Job.findByIdAndUpdate(req.params.id, req.body, {new: true}))
     } catch (error) {
@@ -209,7 +177,7 @@ app.put('/jobs/:id', async (req, res) => {
 })
 
 // Delete route on show page
-app.delete('/jobs/:id', async (req, res) => {
+app.delete('/jobs/:id', validateUsers, async (req, res) => {
     try {
         res.json(await Job.findByIdAndRemove(req.params.id))
     } catch (error) {
