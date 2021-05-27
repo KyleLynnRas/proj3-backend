@@ -17,40 +17,13 @@ const cors = require('cors')
 const morgan = require('morgan')
 // Import Webtoken
 const jwt = require('jsonwebtoken');
+// Import BodyParser
+const bodyParser = require ('body-parser');
+// Import bcrypt
+const bcrypt = require('bcrypt');
+//Import saltRounds
+const saltRounds = 12;
 
-
-const token = jwt.sign({hello: 'world'}, MONGODBURI);
-console.log(token);
-
-const decoded = jwt.verify(token, MONGODBURI);
-console.log(decoded);
-
-// Authorize Function
-const auth = (req, res, next) => {
-    const {authorization} = req.headers
-    if (authorization) {
-        const token = authorization.split(' ')[1]
-        const result = jwt.verify(token, MONGODBURI)
-        req.user = result;
-        next();
-    } else {
-        res.send('NO TOKEN')
-    };
-};
-
-// Dummy User
-const user = { username: 'ValerieLarson', password: 'password' };
-
-// Auth Route
-app.post('/jobs/login', async (req, res) => {
-    const { username, password } = req.body
-    if (username === user.username && password === user.password) {
-        const token = await jwt.sign({ username }, MONGODBURI)
-        await res.json(token);
-    } else {
-        res.send('WRONG USERNAME OR PASSWORD')
-    };
-});
 
 ///////////////////////////////
 // DATABASE CONNECTION
@@ -83,10 +56,27 @@ const JobSchema = new mongoose.Schema({
     interviewed: {type: Boolean, default: false},
     cover_letter: {type: Boolean, default: false},
     resume: {type: Boolean, default: false},
-    user: { username: String, password: String }
 })
 
 const Job = mongoose.model('Job', JobSchema)
+
+const UserSchema = new mongoose.Schema({
+    username: {
+        type: String,
+        required: true
+    },
+    password: {
+        type: String,
+        required: true
+    }
+});
+
+UserSchema.pre('save', function(next) {
+    this.password = bcrypt.hashSync(this.password, saltRounds);
+    next();
+});
+
+
 
 ///////////////////////////////
 // MIDDLEWARE
@@ -95,10 +85,91 @@ const Job = mongoose.model('Job', JobSchema)
 app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
+app.use(bodyParser.urlencoded({extended: false}));
+
+
+
+// const token = jwt.sign({hello: 'world'}, MONGODBURI);
+// console.log(token);
+
+// const decoded = jwt.verify(token, MONGODBURI);
+// console.log(decoded);
+
+// // Authorize Function
+// const auth = (req, res, next) => {
+//     try{
+//     const {authorization} = req.headers
+//     if (authorization) {
+//         const token = authorization.split(' ')[1]
+//         const result = jwt.verify(token, MONGODBURI)
+//         req.user = result;
+//         next();
+//     } else {
+//         res.send('NO TOKEN')
+//     }}
+//     catch(error){
+//         res.send(error);
+//     }
+// };
+
+// // Dummy User
+// const user = { username: 'ValerieLarson', password: 'password' };
+
+// // Auth Route
+// app.post('/jobs/login', async (req, res) => {
+//     const { username, password } = req.body
+//     if (username === user.username && password === user.password) {
+//         const token = await jwt.sign({ username }, MONGODBURI)
+//         await res.json(token);
+//     } else {
+//         res.send('WRONG USERNAME OR PASSWORD')
+//     };
+// });
+
+// // Test auth route
+// app.get("/test", auth, (req, res) => {
+//     res.send(req.user);
+// });
+
+// Create and Authenticate functions
+const create = (req, res, next) => {
+    UserSchema.create({username: req.body.username, password: req.body.password}, function (error, result) {
+        if (error) {
+            next(error);
+        } else {
+            res.json({status: "success", message: "User successfully added!", data: null});
+        }
+    });
+};
+
+const authenticate = (req, res, next) => {
+    UserSchema.findOne({username:req.body.username}, function (error, userInfo) {
+        if (error) {
+            next(error)
+        } else {
+            if(bcrypt.compareSync(req.body.password, userInfo.password)) {
+                const token = jwt.sign({id: userInfo._id}, req.app.get('MONGODBURI'), {expiresIn: '1h'});
+                res.json({status:"success", message: "User Found!", data:{user: userInfo, token: token}});
+            } else {
+                res.json({status:"error", message: "Invalid Username/Password", data: null});
+            }
+        }
+    });
+};
+
+
+
 
 ///////////////////////////////
 // ROUTES
 ////////////////////////////////
+
+// Sign-up route
+app.post('/jobs/signup', UserSchema.create);
+
+// Login route
+app.post('/jobs/login', UserSchema.authenticate);
+
 
 // Test route
 app.get('/', (req, res) => {
