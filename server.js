@@ -138,10 +138,10 @@ const validateUsers = (req, res, next) => {
 ////////////////////////////////
 
 // Sign-up route
-app.post('/jobs/signup', create);
+app.post('/auth/signup', create);
 
 // Login route
-app.post('/jobs/login', authenticate);
+app.post('/auth/login', authenticate);
 
 
 // Test route
