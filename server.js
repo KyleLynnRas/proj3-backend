@@ -24,7 +24,7 @@ const bcrypt = require('bcrypt');
 //Import saltRounds
 const saltRounds = 12;
 
-app.set('MONGODBURI', 'nodeRestApi');
+app.set(MONGODBURI, 'nodeRestApi');
 
 
 
@@ -111,9 +111,8 @@ const authenticate = (req, res, next) => {
             next(error)
         } else {
             if(bcrypt.compareSync(req.body.password, userInfo.password)) {
-                const token = jwt.sign({id: userInfo._id}, req.app.get('MONGODBURI'), {expiresIn: '1h'});
+                const token = jwt.sign({id: userInfo._id}, MONGODBURI, {expiresIn: '1h'});
                 res.json({status:"success", message: "User Found!", data:{user: userInfo, token: token}});
-                console.log(token)
             } else {
                 res.json({status:"error", message: "Invalid Username/Password", data: null});
             }
@@ -123,7 +122,7 @@ const authenticate = (req, res, next) => {
 
 const validateUsers = (req, res, next) => {
     jwt.verify(req.headers['x-access-token'],
-    req.app.get('MONGODBURI'), function(err, decoded) {
+    MONGODBURI, function(err, decoded) {
         if (err) {
             res.json({status:'error', message: err.message, data:null})
         } else {
