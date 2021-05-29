@@ -93,6 +93,7 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(bodyParser.urlencoded({extended: false}));
 
+
 // Create and Authenticate functions
 const create = (req, res, next) => {
     userModel.create({username: req.body.username, password: req.body.password}, function (error, result) {
@@ -112,6 +113,7 @@ const authenticate = (req, res, next) => {
             if(bcrypt.compareSync(req.body.password, userInfo.password)) {
                 const token = jwt.sign({id: userInfo._id}, req.app.get('MONGODBURI'), {expiresIn: '1h'});
                 res.json({status:"success", message: "User Found!", data:{user: userInfo, token: token}});
+                console.log(token)
             } else {
                 res.json({status:"error", message: "Invalid Username/Password", data: null});
             }
@@ -132,6 +134,8 @@ const validateUsers = (req, res, next) => {
     });
 }
 
+app.use('/jobs', validateUsers)
+
 
 ///////////////////////////////
 // ROUTES
@@ -150,7 +154,7 @@ app.get('/', (req, res) => {
 })
 
 // Jobs index route
-app.get('/jobs', validateUsers, async (req, res) => {
+app.get('/jobs', async (req, res) => {
     try {
         res.json(await Job.find({}))
     } catch (error) {
@@ -159,7 +163,7 @@ app.get('/jobs', validateUsers, async (req, res) => {
 })
 
 // Jobs create route
-app.post('/jobs', validateUsers, async (req, res) => {
+app.post('/jobs', async (req, res) => {
     try {
         res.json(await Job.create(req.body))
     } catch (error) {
@@ -168,7 +172,7 @@ app.post('/jobs', validateUsers, async (req, res) => {
 })
 
 // Update route on show page
-app.put('/jobs/:id', validateUsers, async (req, res) => {
+app.put('/jobs/:id', async (req, res) => {
     try {
         res.json(await Job.findByIdAndUpdate(req.params.id, req.body, {new: true}))
     } catch (error) {
@@ -177,7 +181,7 @@ app.put('/jobs/:id', validateUsers, async (req, res) => {
 })
 
 // Delete route on show page
-app.delete('/jobs/:id', validateUsers, async (req, res) => {
+app.delete('/jobs/:id', async (req, res) => {
     try {
         res.json(await Job.findByIdAndRemove(req.params.id))
     } catch (error) {
