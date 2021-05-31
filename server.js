@@ -15,6 +15,18 @@ const mongoose = require('mongoose')
 const cors = require('cors')
 // Import morgan
 const morgan = require('morgan')
+// Import Webtoken
+const jwt = require('jsonwebtoken');
+// Import BodyParser
+const bodyParser = require ('body-parser');
+// Import bcrypt
+const bcrypt = require('bcrypt');
+//Import saltRounds
+const saltRounds = 12;
+
+app.set(MONGODBURI, 'nodeRestApi');
+
+
 
 ///////////////////////////////
 // DATABASE CONNECTION
@@ -51,17 +63,89 @@ const JobSchema = new mongoose.Schema({
 
 const Job = mongoose.model('Job', JobSchema)
 
+const UserSchema = new mongoose.Schema({
+    username: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    password: {
+        type: String,
+        required: true
+    }
+});
+
+UserSchema.pre('save', function(next) {
+    this.password = bcrypt.hashSync(this.password, saltRounds);
+    next();
+});
+
+const userModel = mongoose.model('User', UserSchema)
+
+
+
 ///////////////////////////////
 // MIDDLEWARE
 ////////////////////////////////
 
-app.use(cors())
-app.use(morgan('dev'))
-app.use(express.json())
+app.use(cors());
+app.use(morgan('dev'));
+app.use(express.json());
+app.use(bodyParser.urlencoded({extended: false}));
+
+
+// Create and Authenticate functions
+const create = (req, res, next) => {
+    userModel.create({username: req.body.username, password: req.body.password}, function (error, result) {
+        if (error) {
+            next(error);
+        } else {
+            res.json({status: "success", message: "User successfully added!", data: null});
+        }
+    });
+};
+
+const authenticate = (req, res, next) => {
+    userModel.findOne({username:req.body.username}, function (error, userInfo) {
+        if (error) {
+            next(error)
+        } else {
+            if(bcrypt.compareSync(req.body.password, userInfo.password)) {
+                const token = jwt.sign({id: userInfo._id}, MONGODBURI, {expiresIn: '1h'});
+                res.json({status:"success", message: "User Found!", data:{user: userInfo, token: token}});
+            } else {
+                res.json({status:"error", message: "Invalid Username/Password", data: null});
+            }
+        }
+    });
+};
+
+const validateUsers = (req, res, next) => {
+    jwt.verify(req.headers['x-access-token'],
+    MONGODBURI, function(err, decoded) {
+        if (err) {
+            res.json({status:'error', message: err.message, data:null})
+        } else {
+            //add user id to request
+            req.body.userId = decoded.id;
+            next();
+        }
+    });
+}
+
+app.use('/jobs', validateUsers)
+
 
 ///////////////////////////////
 // ROUTES
 ////////////////////////////////
+
+// Sign-up route
+app.post('/auth/signup', create);
+
+// Login route
+app.post('/auth/login', authenticate);
+
 
 // Test route
 app.get('/', (req, res) => {
