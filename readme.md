@@ -2,7 +2,7 @@
 
 ### Live link:
 
-## https://proj3-backend.herokuapp.com/auth/
+## https://proj3-backend.herokuapp.com/
 
 ## Collaborators
 
