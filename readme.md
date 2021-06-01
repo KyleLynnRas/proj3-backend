@@ -2,7 +2,7 @@
 
 ### Live link:
 
-`Live link goes here`
+## https://proj3-backend.herokuapp.com/auth/
 
 ## Collaborators
 
@@ -13,15 +13,24 @@
 
 ## Technologies Used
 
-- Node
+- Javascript
+- HTML
+- CSS
 - Express
+- React
+- Github
 - Mongoose
-- Cors
-- Morgan
+- MongoDB
+- JSON Web Token
 
 ## Approach
 
 We plan to use a third party API to pull job data from the remotive.io database and populate the search page with jobs based on the parameters entered. As well as the ability to save specific jobs to the mongo database allowing the user to add and edit notes on specific jobs.
+
+## References
+
+- JWT Backend </br>
+  https://medium.com/zero-equals-false/building-a-restful-crud-api-with-node-js-jwt-bcrypt-express-and-mongodb-4e1fb20b7f3d
 
 ## Site Map
 
